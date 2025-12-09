@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>긴 글 요약기</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        #status { font-weight: bold; margin-bottom: 1rem; }
+        #status.online { color: green; }
+        #status.offline { color: red; }
+        #charCount {
+        text-align: right;
+        font-size: 0.9rem;
+        color: #666;
+        }
+    </style>
+</head>
+<body class="container my-5">
+    <h1 class="mb-4">📝 긴 글 요약하기</h1>
+
+    <div class="mb-3">
+        <label for="t" class="form-label">요약할 내용을 입력하세요:</label>
+        <textarea class="form-control" id="t" rows="10" oninput="c()"></textarea>
+        <div id="charCount">현재 입력: 0자</div>
+    </div>
+
+    <button class="btn btn-primary" onclick="s()">요약하기</button>
+
+    <div id="resultBox" class="mt-4" style="display: none;">
+        <h4>📌 요약 결과:</h4>
+        <p id="r" class="border p-3 bg-light rounded"></p>
+
+        <button class="btn btn-secondary mt-2" onclick="readSummary()">📢 요약 듣기</button>
+    </div>
+
+    <script>
+    const MAX_CHARS = 1000;
+
+    function c() {
+        const textarea = document.getElementById("t");
+        let value = textarea.value;
+
+        if (value.length > MAX_CHARS) {
+            textarea.value = value.slice(0, MAX_CHARS);
+        }
+
+        document.getElementById("charCount").textContent = "현재 입력: " + textarea.value.length + "자";
+    }
+
+    async function s() {
+        const v = document.getElementById("t").value.trim();
+        const r = document.getElementById("r");
+        const resultBox = document.getElementById("resultBox");
+
+        resultBox.style.display = "block";
+
+        if (v.length === 0) {
+        r.innerHTML = "<span style='color: red;'>❗ 요약할 내용이 없습니다.</span>";
+        return;
+        }
+
+        r.textContent = "요약중...";
+
+        try {
+        const res = await fetch("/summarize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: v })
+        });
+
+        const d = await res.json();
+
+        if (res.ok && d.summary) {
+            r.textContent = d.summary;
+        } else {
+            r.innerHTML = "<span style='color: red;'>❌ 요약 실패: " + (d.error || "알 수 없는 오류") + "</span>";
+        }
+        } catch {
+        r.innerHTML = "<span style='color: red;'>❌ 요청 실패: 서버와의 연결에 문제가 있습니다.</span>";
+        }
+    }
+
+    function readSummary() {
+        const summaryText = document.getElementById("r").textContent;
+
+        if (!summaryText || summaryText.includes("❌") || summaryText === "요약중...") {
+        return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(summaryText);
+        utterance.lang = "ko-KR";
+        speechSynthesis.speak(utterance);
+    }
+    </script>
+</body>
+</html>
