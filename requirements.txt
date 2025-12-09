@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-multipart
+
+transformers==4.37.2
+tokenizers
+sentencepiece
+
+torch==2.2.1+cu121
+torchvision==0.17.1+cu121
+torchaudio==2.2.1+cu121
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+numpy
